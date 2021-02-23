@@ -1,72 +1,61 @@
 #pkmn_record_bot.py
-#tl;dr – bit messy but can connect to a db and write to a db with simple commands!
+#tl;dr – a bot that can create records in a DB and check stuff in the DB
 
 
 
-##   SETUP   ##
-#import the discord library, access a specific part of the discord.ext library and json library
+##   GENERAL SETUP   ##
+#import libraries that we will need access to
 import discord
 from discord.ext import commands
 import json
 import sqlite3
 
-#connect to a (local) database via sqlite3
+#connect to a (local) db via sqlite3
 sql_conn = sqlite3.connect("pkmn_db.db")
 
-
-
-##   JSON ZONE  ##
-#we create a var for the SECRET token to connect to and run the bot itself
-#access via JSON file since it should be...SECRET!!! don't commit it LOL!!!
+#use a separate file to store the token
 with open ("bot_token.json", "r") as read_file:
     bot_token = json.load(read_file)["test_bot"] #the specific bot
 
 
 
-##  DISCORD ZONE  ##
-#connect to discord via commnands.Bot (which works like client = discord.Client())
-#prefix = what the bot looks for (e.g. !hello, !check)
+##  DISCORD SETUP ZONE  ##
+#connect to discord via commnands.Bot(), the prefix is what the bot looks for (e.g. !hello, !check)
 bot = commands.Bot(command_prefix = "!")
-
 
 #called when the bot is connected to discord, show a message when successful
 @bot.event
-async def on_ready(): #this is a predefined function name, can't change this!!
-    print ("{0.user} has been connected :D".format(bot))
+async def on_ready(): #this is a predefined function name!
+    print ("\n{0.user} has been connected :D".format(bot))
 
-
-#create a method to ask qursitons neater
+#create a method for asking questions to reduce duplicate code
 async def ask_question(ctx, question):
-
-    #check that the reply was from op and is in the same channel so that the parameters passed are correct!
-    def check(m):
-        return m.author == ctx.message.author and m.channel == ctx.message.channel
-
+    #create a lambda to check that the reply was from op and is in the same channel so that the parameters passed are correct (cos the bot can answer itself LOL)
+    check_msg = (lambda msg: msg.author == ctx.message.author and msg.channel == ctx.message.channel)
 
     await ctx.send(question)
-    answer = await bot.wait_for('message', check=check, timeout=60)
-    return answer.content
+    answer = await bot.wait_for('message', check=check_msg, timeout=60) #set the var to whatever the user replies
+    return answer.content #get the message's content or it raises an error!
 
 
 
+##  BOT COMMAND ZONE ##
 #add a new record to the db
 @bot.command()
 async def create(ctx):
     user_id = ctx.message.author.id #get the user's id via ctx
-
     game_title = await ask_question(ctx, "What game is the pokemon team from?")
 
     pkmn_team = []
     for i in range(6):
-        await ctx.send(f"Please add pokemon {str(i + 1)} on your team: ")
-        pkmn = await bot.wait_for('message', timeout=60)
-        pkmn_team.append(pkmn.content)
+        answer = await ask_question(ctx, f"Please add pokemon {str(i + 1)} on your team: ")
+        pkmn_team.append(answer)
 
-    await ctx.send(f"You have added {game_title} with {pkmn_team}.") #for testing
+    await ctx.send(f"You have added {game_title} with: {', '.join(pkmn_team)}, for user {ctx.message.author}! :D") #for testing
 
 
     # #after getting the vars, put them into an SQL statement
-    sql_statement = f""" INSERT INTO user
+    sql_create = f""" INSERT INTO user
                          ('user_id',
                           'game_title',
                           'pkmn_1',
@@ -85,14 +74,33 @@ async def create(ctx):
                                 '{pkmn_team[5]}');
                      """
 
-    #cur is a SQL word, so u cant change the name :'v
+    #cur is a SQL word, so u cant change the name
     cur = sql_conn.cursor()
-    cur.execute(sql_statement)
+    cur.execute(sql_create)
     sql_conn.commit()
+
+
+#check what games a user has
+@bot.command()
+async def check(ctx):
+    user_id = ctx.message.author.id
+    sql_check = f"SELECT game_title from user WHERE user_id = '{str(user_id)}';"
+
+    #connect to the db and retrieve the values based on the SELECT statement ^
+    cur = sql_conn.cursor()
+    cur.execute(sql_check)
+    titles_list = cur.fetchall()
+
+    print (user_id, titles_list)
+    if titles_list == []:
+        await ctx.send(f"The user {ctx.message.author} does not have any games registered :V")
+    else:
+        await ctx.send(f"The user {ctx.message.author} has these games registered: {', '.join(titles_list)}")
 
 
 #connect to the bot via the secret token and bot ahoy!
 bot.run(bot_token)
+
 
 
 
@@ -125,3 +133,8 @@ bot.run(bot_token)
 
 #     await ctx.send("What game are you adding?")
 #     game_title = await bot.wait_for('message', timeout=60)
+
+
+# def check(msg):
+#     print (msg.author == ctx.message.author and msg.channel == ctx.message.channel)
+#     return msg.author == ctx.message.author and msg.channel == ctx.message.channel
