@@ -74,7 +74,7 @@ async def create(ctx):
                                 '{pkmn_team[5]}');
                      """
 
-    #cur is a SQL word, so u cant change the name
+    #cursor is a db object used to retrieve data from a result set one row at a time.
     cur = sql_conn.cursor()
     cur.execute(sql_create)
     sql_conn.commit()
