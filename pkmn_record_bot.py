@@ -98,43 +98,7 @@ async def check(ctx):
         await ctx.send(f"The user {ctx.message.author} has these games registered: {', '.join(titles_list)}")
 
 
+
+
 #connect to the bot via the secret token and bot ahoy!
 bot.run(bot_token)
-
-
-
-
-
-## EXTRA STUFF ##
-
-# @bot.command()
-# async def add(ctx, game_title):
-#     await ctx.send(f"The game title is {game_title}")
-
-# @bot.command()
-# async def add(ctx):
-#     await ctx.send("Question here :3")
-#     var = await bot.wait_for('message', timeout=time to wait)
-
-
-###if statement
-# if team_amount == 0:
-#     await ctx.send("You need to have at least one pokemon! :O")
-# elif team_amount > 6:
-#     await ctx.send("That's too many pokemon! You can have between 1 and 6 pokemon on your team.")
-
-#dynamic team amount
-# pkmn_team = []
-# for i in range(int(team_amount.content)):
-#     await ctx.send(f"Please add pokemon {str(i + 1)} on your team: ")
-#     pkmn = await bot.wait_for("message", timeout=60)
-#     pkmn_team.append(pkmn.content)
-
-
-#     await ctx.send("What game are you adding?")
-#     game_title = await bot.wait_for('message', timeout=60)
-
-
-# def check(msg):
-#     print (msg.author == ctx.message.author and msg.channel == ctx.message.channel)
-#     return msg.author == ctx.message.author and msg.channel == ctx.message.channel
